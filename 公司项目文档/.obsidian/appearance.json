@@ -1,0 +1,8 @@
+{
+  "baseFontSizeAction": true,
+  "showRibbon": true,
+  "showViewHeader": true,
+  "enabledCssSnippets": [
+    "my"
+  ]
+}

@@ -1,0 +1,31 @@
+/* ========================================
+   Obsidian 表格宽度优化
+   ======================================== */
+
+/* 1. 阅读模式：表格占满正文宽度 */
+.markdown-rendered table {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 2. 实时预览：表格容器及表格占满宽度 */
+.markdown-source-view.mod-cm6 .cm-table-widget,
+.markdown-source-view.mod-cm6 .cm-table-widget .table-wrapper,
+.markdown-source-view.mod-cm6 .cm-table-widget table {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 3. 列宽自动适应内容 */
+.markdown-rendered table,
+.markdown-source-view.mod-cm6 .cm-table-widget table {
+    table-layout: auto;
+}
+
+/* 4. 单元格长文本自动换行 */
+.markdown-rendered table th,
+.markdown-rendered table td,
+.markdown-source-view.mod-cm6 .cm-table-widget th,
+.markdown-source-view.mod-cm6 .cm-table-widget td {
+    overflow-wrap: anywhere;
+}
