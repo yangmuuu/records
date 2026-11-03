@@ -169,10 +169,10 @@ if(HAL_UARTEx_ReceiveToIdle(&huart1, re_msg, sizeof(re_msg), &re_msg_size, HAL_M
 ![image-20260330134942106](./assets/image-20260330134942106.png)
 
 ```c
-// 接收完毕标志位
-uint8_t isOver = 0;
-uint8_t buffer[100];
-uint16_t size = 0;
+  // 接收完毕标志位
+  uint8_t isOver = 0;
+  uint8_t buffer[100];
+  uint16_t size = 0;
 
 // 以中断方式进行接收
 HAL_UART_Receive_IT(&huart1, buffer, 10);
