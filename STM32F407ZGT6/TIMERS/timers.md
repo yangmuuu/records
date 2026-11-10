@@ -105,37 +105,118 @@ TIM6 开始计数
 ```c
 HAL_TIM_Base_Start() // 启动定时器，不开启中断
 HAL_TIM_Base_Start_IT() // 启动定时器，开启中断
-HAL_TIM_Base_Stop()
+HAL_TIM_Base_Stop()  // 这种会一直计数，不会触发更新事件
 HAL_TIM_base_Stop_IT()
 
 HAL_TIM_PeriodElapsedCallback() // 定时器到期回调 中断进入
 ```
 
 ```c
+// mian.c
 
+/* USER CODE BEGIN 2 */
+// 启动定时器
+HAL_TIM_Base_Start_IT(&htim6);
+/* USER CODE END 2 */
+
+
+/* USER CODE BEGIN 4 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if(htim->Instance == TIM6)
+  {
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+  }
+}
+/* USER CODE END 4 */
+```
+
+## 通用定时器
+
+![timers-4.png](assets/timers-4.png)
+
+| 配置项 | 作用 | 常见用途 |
+| --- | --- | --- |
+| Slave Mode | 从模式，决定定时器是否受外部触发控制 | 多定时器同步、外部信号计数 |
+| Trigger Source | 选择从模式的触发信号来源 | TIM1 触发 TIM2 |
+| Clock Source | 选择定时器计数时钟来源 | 内部时钟、外部时钟 |
+| Channel1～4 | 配置定时器的四个输入输出通道 | PWM、输入捕获、输出比较 |
+| Combined Channels | 将通道组合实现特定功能 | PWM 输入测量、编码器 |
+| Use ETR as Clearing Source | 使用 ETR 外部信号清除输出比较参考信号 | 外部信号控制 PWM |
+| XOR activation | 将部分输入通道信号进行异或组合 | 霍尔传感器接口 |
+| One Pulse Mode | 单脉冲模式，触发后执行一次计数过程并停止 | 单次脉冲输出 |
+
+Trigger Source（触发源）
+- ITR0～ITR3：来自其他定时器的内部触发。
+- TI1FP1：来自通道 1 的滤波后输入信号。
+- TI2FP2：来自通道 2 的滤波后输入信号。
+- ETRF：来自外部触发输入的滤波后信号。
+需要注意，ITR0 不一定代表 TIM1，具体对应关系要看芯片参考手册中的定时器内部触发连接表。
+
+
+定时器通道的常见用途
+| 类型 | 常见模式 | 作用 |
+| --- | --- | --- |
+| 输出 | PWM Generation | 输出 PWM 波形 |
+| 输出 | Output Compare | CNT 到达 CCR 时触发比较事件，可控制引脚或产生中断 |
+| 输入 | Input Capture | 捕获外部信号边沿，记录 CNT 值 |
+| 输入 | PWM Input | 测量外部 PWM 的频率和占空比 |
+| 输入 | Encoder Mode | 通过两个通道读取编码器 |
+
+### PWM输出
+
+![timers-5.png](assets/timers-5.png)
+
+![timers-6.png](assets/timers-6.png)
+
+PWM Mode 1 在你当前的向上计数、高电平有效配置下：
+- 当 CNT < CCR1：输出高电平。
+- 当 CNT >= CCR1：输出低电平。
+
+Output compare preload
+它控制 CCR1 是否预装载。
+Enable：新占空比通常在下一个更新事件生效。
+Disable：写入 CCR1 后立即参与比较，可能使当前周期产生异常宽度的脉冲。
+
+CH Polarity
+控制 PWM 输出有效电平的极性。
+- High：PWM Mode 1 有效期间输出高电平。
+- Low：PWM Mode 1 有效期间输出低电平。
+
+
+```c
+// 启动PWM
+HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1); 
+
+// 25% 占空比
+__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 2100);
+
+// 50% 占空比
+__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 4200);
+
+// 75% 占空比
+__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 6300);
 ```
 
 
+| 中断类型 | 触发条件 | HAL 回调函数 |
+| --- | --- | --- |
+| 更新中断（Update） | 计数器完成一个周期 | HAL\_TIM\_PeriodElapsedCallback() |
+| PWM 比较中断（CC1） | CNT 与 CCR1 匹配 | HAL\_TIM\_PWM\_PulseFinishedCallback() |
 
+| HAL 函数 | PWM 输出 | 更新中断 | 比较中断 |
+| --- | --- | --- | --- |
+| HAL\_TIM\_PWM\_Start() | 1 | — | — |
+| HAL\_TIM\_PWM\_Start\_IT() | 1 | — | 1 |
+| HAL\_TIM\_Base\_Start\_IT() | 不负责配置 PWM | 1 | — |
 
+```c
+// 启动 TIM2 CH1 PWM 输出
+HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 开启 TIM2 更新中断
+HAL_TIM_Base_Start_IT(&htim2);
+```
 
 
 
