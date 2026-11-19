@@ -218,9 +218,65 @@ HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 HAL_TIM_Base_Start_IT(&htim2);
 ```
 
+```c
+// 代码
+
+/* USER CODE BEGIN PV */
+volatile uint8_t is_pressed = 0;
+/* USER CODE END PV */
+
+
+/* USER CODE BEGIN 2 */
+// 启动 tim2 通道2
+HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+/* USER CODE END 2 */
+
+while (1)
+{
+  if (is_pressed == 1)
+  {
+      HAL_Delay(20);
+      if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET)
+      {
+          PWM_Add10Percent();
+          // 等待按键松开
+          while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET)
+          {
+          }
+          // 松开消抖
+          HAL_Delay(20);
+          is_pressed = 0;
+      }
+  }
+}
 
 
 
+/* USER CODE BEGIN 4 */
+// 每次增加 10% 占空比，最大 100%
+void PWM_Add10Percent(void)
+{
+  // ARR
+    uint32_t period = TIM2->ARR + 1;
+    uint32_t step = period / 10;
 
+    if (TIM2->CCR1 >= period)
+    {
+        TIM2->CCR1 = step;
+        return;
+    }
 
+    TIM2->CCR1 += step;
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == GPIO_PIN_15)
+    {
+        is_pressed = 1;
+    }
+}
+/* USER CODE END 4 */
+
+```
 
